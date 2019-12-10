@@ -10,7 +10,9 @@ export default async (req, res, next) => {
     return res.status(401).json({ error: 'Token not provided' });
   }
 
-  if (req.authUser !== 'admin@gympoint.com') {
+  const { authUser } = req.body;
+
+  if (authUser !== 'admin@gympoint.com') {
     return res
       .status(401)
       .json({ error: 'This user does not have enought privileges' });
@@ -20,7 +22,7 @@ export default async (req, res, next) => {
 
   try {
     const decoded = await promisify(jwt.verify)(token, authConfig.secret);
-    req.userId = decoded.id;
+    req.body.userId = decoded.id;
 
     return next();
   } catch (err) {

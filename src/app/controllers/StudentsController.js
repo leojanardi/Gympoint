@@ -1,37 +1,30 @@
 /* eslint-disable no-console */
 /* eslint-disable class-methods-use-this */
 import * as Yup from 'yup';
-import User from '../models/User';
+import Student from '../models/Student';
 
 class StudentsController {
-  async store(req, res) {
+  async insert(req, res) {
     const schema = Yup.object().shape({
       name: Yup.string().required(),
       email: Yup.string()
         .email()
         .required(),
-      password: Yup.string()
-        .required()
-        .min(6),
+      age: Yup.number().required(),
+      weight: Yup.number().required(),
+      height: Yup.number().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
-    const userExists = await User.findOne({ where: { email: req.body.email } });
+    console.log(req.body);
 
-    if (userExists) {
-      return res.status(400).json({ error: 'User already exists.' });
-    }
-
-    const { id, name, email, provider } = await User.create(req.body);
+    const values = await Student.create(req.body);
 
     return res.json({
-      id,
-      name,
-      email,
-      provider,
+      values,
     });
   }
 
@@ -39,44 +32,36 @@ class StudentsController {
     const schema = Yup.object().shape({
       name: Yup.string(),
       email: Yup.string().email(),
-      oldPassword: Yup.string().min(6),
-      password: Yup.string()
-        .min(6)
-        .when('oldPassword', (oldPassword, field) =>
-          oldPassword ? field.required() : field
-        ),
-      confirmPassword: Yup.string().when('password', (password, field) =>
-        password ? field.required().oneOf([Yup.ref('password')]) : field
-      ),
+      age: Yup.number(),
+      weight: Yup.number(),
+      height: Yup.number(),
     });
 
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
-    const { email, oldPassword } = req.body;
+    const { email } = req.body;
 
-    const user = await User.findByPk(req.userId);
+    const student = await Student.findByPk(req.userId);
 
-    if (email !== user.email) {
-      const userExists = await User.findOne({ where: { email } });
+    if (email !== student.email) {
+      const studentExists = await Student.findOne({ where: { email } });
 
-      if (userExists) {
-        return res.status(400).json({ error: 'User already exists' });
+      if (studentExists) {
+        return res.status(400).json({ error: 'Student already exists' });
       }
     }
 
-    if (oldPassword && !(await user.checkPassword(oldPassword))) {
-      return res.status(401).json({ error: 'Password does not match' });
-    }
-
-    const { id, name, provider } = await user.update(req.body);
+    const { id, name, age, weight, height } = await student.update(req.body);
 
     return res.json({
       id,
       name,
       email,
-      provider,
+      age,
+      weight,
+      height,
     });
   }
 }
